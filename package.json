@@ -1,0 +1,16 @@
+{
+  "name": "easy-video",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:desktop\"",
+    "dev:server": "pnpm --filter @easy-video/server dev",
+    "dev:desktop": "pnpm --filter @easy-video/desktop dev",
+    "build": "pnpm --filter @easy-video/desktop build",
+    "build:server": "pnpm --filter @easy-video/server build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "concurrently": "^8.2.2"
+  }
+}

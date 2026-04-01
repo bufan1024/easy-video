@@ -1,0 +1,23 @@
+{
+  "name": "@easy-video/server",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "fastify": "^4.26.2",
+    "@fastify/cors": "^9.0.1",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "uuid": "^9.0.1",
+    "@easy-video/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2",
+    "@types/node": "^20.11.24",
+    "@types/fluent-ffmpeg": "^2.1.24",
+    "@types/uuid": "^9.0.8",
+    "tsx": "^4.7.1"
+  }
+}
