@@ -3,7 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Easy Video - AI 自动剪辑</title>
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="color-scheme" content="dark">
+  <title>Easy Video - AI 智能剪辑</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Prevent flash of unstyled content */
+    html {
+      background: #0a0a0f;
+    }
+    body {
+      background: #0a0a0f;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
