@@ -5,6 +5,9 @@ import { exec } from 'child_process';
 let mainWindow: BrowserWindow | null = null;
 let serverProcess: ReturnType<typeof exec> | null = null;
 
+// 禁用 autofill 功能，避免 DevTools 警告
+app.commandLine.appendSwitch('disable-features', 'AutofillServerCommunication');
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -18,7 +21,7 @@ function createWindow() {
 
   // 开发环境加载 Vite 开发服务器
   if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
-    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));

@@ -48,3 +48,50 @@ export async function exportVideo(
   });
   return res.json();
 }
+
+// LLM 配置相关 API
+export interface LLMConfigResponse {
+  configured: boolean;
+  provider?: string;
+  model?: string;
+  baseUrl?: string;
+  hasApiKey?: boolean;
+  lastUpdated?: number;
+}
+
+export interface LLMConfigRequest {
+  provider: string;
+  apiKey: string;
+  model: string;
+  baseUrl?: string;
+}
+
+export async function getLLMConfig(): Promise<LLMConfigResponse> {
+  const res = await fetch(`${API_BASE}/config/llm`);
+  return res.json();
+}
+
+export async function saveLLMConfig(config: LLMConfigRequest): Promise<{ success: boolean; provider: string; model: string; lastUpdated: number }> {
+  const res = await fetch(`${API_BASE}/config/llm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  return res.json();
+}
+
+export async function deleteLLMConfig(): Promise<{ success: boolean }> {
+  const res = await fetch(`${API_BASE}/config/llm`, {
+    method: 'DELETE',
+  });
+  return res.json();
+}
+
+export async function testLLMConfig(config: LLMConfigRequest): Promise<{ success: boolean; message?: string; error?: string }> {
+  const res = await fetch(`${API_BASE}/config/llm/test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  return res.json();
+}
