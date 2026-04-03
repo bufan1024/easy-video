@@ -35,6 +35,37 @@ export async function getVideoDuration(videoPath: string): Promise<number> {
   });
 }
 
+// 提取单个关键帧
+export async function extractFrame(videoPath: string, timestamp: number, outputPath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    ffmpeg(videoPath)
+      .screenshots({
+        timestamps: [timestamp],
+        filename: path.basename(outputPath),
+        folder: path.dirname(outputPath),
+        size: '1280x720', // 缩小分辨率节省带宽
+      })
+      .on('end', () => resolve(outputPath))
+      .on('error', reject);
+  });
+}
+
+// 提取多个关键帧
+export async function extractKeyframes(videoPath: string, timestamps: number[], taskId: string): Promise<string[]> {
+  const tempDir = getTempDir();
+  const frameDir = path.join(tempDir, `${taskId}-frames`);
+  await fs.mkdir(frameDir, { recursive: true });
+
+  const framePaths: string[] = [];
+  for (let i = 0; i < timestamps.length; i++) {
+    const framePath = path.join(frameDir, `frame-${i}.jpg`);
+    await extractFrame(videoPath, timestamps[i], framePath);
+    framePaths.push(framePath);
+  }
+
+  return framePaths;
+}
+
 export async function extractSegment(
   videoPath: string,
   range: TimeRange,
