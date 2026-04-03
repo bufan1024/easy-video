@@ -1,6 +1,19 @@
-import type { Transcript } from '@easy-video/shared';
+import type { Transcript, VisualAnalysis, EmotionScore } from '@easy-video/shared';
 import { loadLLMConfig } from './config-store';
 import { callLLM } from './llm-client';
+
+// 评分结果类型
+interface ScoreResult {
+  score: number;
+  reason: string;
+}
+
+// 多模态评分结果
+interface MultiModalScoreResult extends ScoreResult {
+  textScore: number;
+  visualScore: number;
+  emotionScore: number;
+}
 
 const SCORING_PROMPT = `你是一个视频内容评估专家。请评估以下视频片段的信息价值。
 
@@ -18,11 +31,19 @@ const SCORING_PROMPT = `你是一个视频内容评估专家。请评估以下�
 请直接返回JSON格式结果（不要包含markdown代码块）：
 {"score": <1-10的整数>, "reason": "<简短理由>"}`;
 
-export async function scoreSegment(segment: Transcript): Promise<{ score: number; reason: string }> {
+// 评分权重
+const SCORE_WEIGHTS = {
+  textContent: 0.35,
+  visualQuality: 0.25,
+  emotionEnergy: 0.25,
+  audioQuality: 0.15,
+};
+
+// 评分片段
+export async function scoreSegment(segment: Transcript): Promise<ScoreResult> {
   const config = await loadLLMConfig();
 
   if (!config) {
-    // 未配置时使用 mock
     return mockScore(segment);
   }
 
@@ -37,7 +58,6 @@ export async function scoreSegment(segment: Transcript): Promise<{ score: number
       maxTokens: 200,
     });
 
-    // 解析 JSON 响应
     const result = JSON.parse(response.content);
     return {
       score: Math.min(10, Math.max(1, result.score)),
@@ -49,7 +69,81 @@ export async function scoreSegment(segment: Transcript): Promise<{ score: number
   }
 }
 
-function mockScore(segment: Transcript): { score: number; reason: string } {
+// 多模态综合评分
+export async function scoreSegmentMultiModal(
+  segment: Transcript,
+  visualAnalysis?: VisualAnalysis,
+  emotionScore?: EmotionScore
+): Promise<MultiModalScoreResult> {
+  // 1. 文本评分
+  const textResult = await scoreSegment(segment);
+  const textScore = textResult.score;
+
+  // 2. 视觉评分
+  const visualScore = visualAnalysis?.visualInterest ?? 5;
+
+  // 3. 情绪评分
+  const emotionValue = emotionScore?.energy ?? 5;
+
+  // 4. 音频评分
+  const audioScore = inferAudioScore(segment.text, emotionValue);
+
+  // 5. 综合评分
+  const totalScore =
+    textScore * SCORE_WEIGHTS.textContent +
+    visualScore * SCORE_WEIGHTS.visualQuality +
+    emotionValue * SCORE_WEIGHTS.emotionEnergy +
+    audioScore * SCORE_WEIGHTS.audioQuality;
+
+  const finalScore = Math.round(totalScore * 10) / 10;
+
+  return {
+    score: Math.min(10, Math.max(1, Math.round(finalScore))),
+    reason: generateReason(textResult.reason, visualAnalysis, emotionScore),
+    textScore,
+    visualScore,
+    emotionScore: emotionValue,
+  };
+}
+
+// 推断音频评分
+function inferAudioScore(text: string, emotionEnergy: number): number {
+  const length = text.length;
+
+  if (length > 50 && emotionEnergy >= 6) return 7;
+  if (length > 30) return 6;
+  if (length > 10) return 5;
+  return 4;
+}
+
+// 生成综合理由
+function generateReason(
+  textReason: string,
+  visualAnalysis?: VisualAnalysis,
+  emotionScore?: EmotionScore
+): string {
+  const parts: string[] = [textReason];
+
+  if (visualAnalysis) {
+    if (visualAnalysis.quality < 5) {
+      parts.push('画面质量: ' + visualAnalysis.quality + '/10');
+    }
+    if (visualAnalysis.sceneType !== '未知') {
+      parts.push('场景: ' + visualAnalysis.sceneType);
+    }
+  }
+
+  if (emotionScore?.keyMoment) {
+    parts.push('🔥 高潮片段');
+  } else if (emotionScore?.energy && emotionScore.energy >= 7) {
+    parts.push('情绪: ' + emotionScore.emotion);
+  }
+
+  return parts.join(' | ');
+}
+
+// Mock 评分
+function mockScore(segment: Transcript): ScoreResult {
   const duration = segment.endTime - segment.startTime;
   const textLength = segment.text.length;
   const score = Math.min(10, Math.max(1, Math.round((duration / 30) * 5 + textLength / 20)));
